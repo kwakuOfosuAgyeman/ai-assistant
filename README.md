@@ -33,7 +33,7 @@ This will create a `config/ai.php` file in your Laravel application.
 Add your API keys and configuration to the `.env` file:
 
 ```env
-OPENAI_API_KEY=your-openai-api-key
+YOUR_PROVIDER_API_KEY=your-provider-api-key
 ```
 
 ---
@@ -186,7 +186,7 @@ $response = $aiService->provider('openai')->translateText($text, $targetLanguage
 ```
 
 ### `generateCode(string $prompt, array $options = []): array`
-Generates code.
+Generates code. This has a default temperature of 0.2
 
 ```php
 $text = 'Generate python code to reverse a string';

@@ -19,7 +19,11 @@ return [
             ],
             'claude' => [
                 'api_key' => env('CLAUDE_API_KEY'),
-                'base_url' => 'https://api.anthropic.com/v1/'
+                'base_url' => 'https://api.anthropic.com/v1/' ?? env('CLAUDE_BASE_URL'),
+                'default_max_tokens' => 150,
+                'model' => 'claude-3-5-sonnet-20241022',
+                'version' => 'version',
+
             ]
         ],
     ]

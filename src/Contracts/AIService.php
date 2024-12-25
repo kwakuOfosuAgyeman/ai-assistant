@@ -20,11 +20,6 @@ interface AIService
     public function analyzeSentiment(string $text, array $options = []): array;
 
     /**
-     * Perform named entity recognition (NER) on a text.
-     */
-    public function extractEntities(string $text, array $options = []): array;
-
-    /**
      * Summarize a given text.
      */
     public function summarizeText(string $text, array $options = []): array;
@@ -34,20 +29,15 @@ interface AIService
      */
     public function translateText(string $text, string $targetLanguage, array $options = []): array;
 
-    /**
-     * Classify text into predefined categories.
+        /**
+     * Generate code or fix code snippets.
      */
-    public function classifyText(string $text, array $categories, array $options = []): array;
+    public function generateCode(string $prompt, array $options = []): array;
 
     /**
      * Generate embeddings for a given text.
      */
     public function generateEmbeddings(string $text, array $options = []): array;
-
-    /**
-     * Perform question answering on a given context and question.
-     */
-    public function answerQuestion(string $context, string $question, array $options = []): array;
 
     /**
      * Detect language of the provided text.
@@ -84,13 +74,15 @@ interface AIService
      */
     public function zeroShotClassification(string $text, array $labels, array $options = []): array;
 
-    /**
-     * Generate code or fix code snippets.
-     */
-    public function generateCode(string $prompt, array $options = []): array;
+
 
     /**
      * Perform document completion, suggesting text based on input.
      */
     public function completeDocument(string $partialText, array $options = []): array;
+
+    /**
+     * Classify text into predefined categories.
+     */
+    public function classifyText(string $text, array $categories, array $options = []): array;
 }
