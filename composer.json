@@ -22,6 +22,12 @@
             }
         }
     },
+    "authors": [
+        {
+            "name": "Kwaku Ofosu Agyeman",
+            "email": "kwakuayemang.2000@gmail.com"
+        }
+    ],
     "config": {
         "allow-plugins": {
             "php-http/discovery": true
