@@ -1,25 +1,52 @@
-# CakePHP 3
+# Node modules and vendor dependencies
+/node_modules
+/vendor
 
-/vendor/*
-/config/app.php
+# OS-specific files
+.DS_Store
+Thumbs.db
 
-/tmp/cache/models/*
-!/tmp/cache/models/empty
-/tmp/cache/persistent/*
-!/tmp/cache/persistent/empty
-/tmp/cache/views/*
-!/tmp/cache/views/empty
-/tmp/sessions/*
-!/tmp/sessions/empty
-/tmp/tests/*
-!/tmp/tests/empty
+# Laravel-specific files
+.env
+.env.*
+/storage
+/storage/logs
+/storage/framework
+/public/storage
 
-/logs/*
-!/logs/empty
+# Cache files
+*.log
+*.cache
+*.temp
+*.bak
+*.swp
+*.swo
+*.tmp
+*.pid
 
-# CakePHP 2
+# IDE and editor settings
+.idea/
+.vscode/
+*.iml
 
-/app/tmp/*
-/app/Config/core.php
-/app/Config/database.php
-/vendors/*
+# PHPUnit test results
+/phpunit.result.cache
+
+# Composer files
+composer.lock
+/vendor/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Build files
+/.phpunit.cache
+/phpunit.xml
+/phpunit.xml.dist
+
+# Swagger/OpenAPI documentation (if generated dynamically)
+/storage/api-docs/swagger.json
+
+# Specific to Laravel Packages
+/.phpstorm.meta.php
