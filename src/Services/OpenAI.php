@@ -22,10 +22,10 @@ class OpenAIService implements AIService
     {
         try {
             $response = $this->client->completions()->create([
-                'model' => $options['model'] ?? config('ai.openai.default_model'),
+                'model' => $options['model'] ?? config('ai.providers.openai.default_model'),
                 'prompt' => $prompt,
-                'max_tokens' => $options['max_tokens'] ?? config('ai.openai.default_max_tokens'),
-                'temperature' => $options['temperature'] ?? config('ai.openai.default_temperature'),
+                'max_tokens' => $options['max_tokens'] ?? config('ai.providers.openai.default_max_tokens'),
+                'temperature' => $options['temperature'] ?? config('ai.providers.openai.default_temperature'),
             ]);
             return $response->toArray();
         } catch (Exception $e) {
@@ -40,9 +40,9 @@ class OpenAIService implements AIService
     {
         try {
             $response = $this->client->chat()->create([
-                'model' => $options['model'] ?? 'gpt-4',
+                'model' => $options['model'] ?? config('ai.providers.openai.chat_model'),
                 'messages' => $options['messages'],
-                'temperature' => $options['temperature'] ?? config('ai.openai.default_temperature'),
+                'temperature' => $options['temperature'] ?? config('ai.providers.openai.default_temperature'),
             ]);
             return $response->toArray();
         } catch (Exception $e) {
@@ -57,7 +57,7 @@ class OpenAIService implements AIService
     {
         try {
             $response = $this->client->classifications()->create([
-                'model' => $options['model'] ?? 'text-davinci-003',
+                'model' => $options['model'] ?? config('ai.providers.openai.default_model'),
                 'query' => $text,
                 'labels' => ['Positive', 'Neutral', 'Negative'],
             ]);
@@ -74,10 +74,10 @@ class OpenAIService implements AIService
     {
         try {
             $response = $this->client->completions()->create([
-                'model' => $options['model'] ?? 'text-davinci-003',
+                'model' => $options['model'] ?? config('ai.providers.openai.default_model'),
                 'prompt' => "Summarize the following text:\n\n" . $text,
-                'max_tokens' => $options['max_tokens'] ?? config('ai.openai.default_max_tokens'),
-                'temperature' => $options['temperature'] ?? config('ai.openai.default_temperature'),
+                'max_tokens' => $options['max_tokens'] ?? config('ai.providers.openai.default_max_tokens'),
+                'temperature' => $options['temperature'] ?? config('ai.providers.openai.default_temperature'),
             ]);
             return $response->toArray();
         } catch (Exception $e) {
@@ -92,10 +92,10 @@ class OpenAIService implements AIService
     {
         try {
             $response = $this->client->completions()->create([
-                'model' => $options['model'] ?? 'text-davinci-003',
+                'model' => $options['model'] ?? config('ai.providers.openai.default_model'),
                 'prompt' => "Translate the following text to {$targetLanguage}:\n\n" . $text,
-                'max_tokens' => $options['max_tokens'] ?? config('ai.openai.default_max_tokens'),
-                'temperature' => $options['temperature'] ?? config('ai.openai.default_temperature'),
+                'max_tokens' => $options['max_tokens'] ?? config('ai.providers.openai.default_max_tokens'),
+                'temperature' => $options['temperature'] ?? config('ai.providers.openai.default_temperature'),
             ]);
             return $response->toArray();
         } catch (Exception $e) {
@@ -120,24 +120,6 @@ class OpenAIService implements AIService
     }
 
     /**
-     * Perform question answering on a given context and question.
-     */
-    public function answerQuestion(string $context, string $question, array $options = []): array
-    {
-        try {
-            $response = $this->client->completions()->create([
-                'model' => $options['model'] ?? 'text-davinci-003',
-                'prompt' => "Answer the question based on the context below:\n\nContext: {$context}\n\nQuestion: {$question}",
-                'max_tokens' => $options['max_tokens'] ?? config('ai.openai.default_max_tokens'),
-                'temperature' => $options['temperature'] ?? config('ai.openai.default_temperature'),
-            ]);
-            return $response->toArray();
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
-
-    /**
      * Generate code or fix code snippets.
      */
     public function generateCode(string $prompt, array $options = []): array
@@ -146,7 +128,7 @@ class OpenAIService implements AIService
             $response = $this->client->completions()->create([
                 'model' => $options['model'] ?? 'code-davinci-002',
                 'prompt' => $prompt,
-                'max_tokens' => $options['max_tokens'] ?? config('ai.openai.default_max_tokens'),
+                'max_tokens' => $options['max_tokens'] ?? config('ai.providers.openai.default_max_tokens'),
                 'temperature' => $options['temperature'] ?? 0.2,
             ]);
             return $response->toArray();
