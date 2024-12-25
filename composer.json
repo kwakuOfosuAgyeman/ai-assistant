@@ -4,7 +4,8 @@
     "type": "library",
     "require": {
         "php": ">=8.0",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "openai-php/client": "^0.10.3"
     },
     "autoload": {
         "psr-4": {
@@ -19,6 +20,11 @@
             "aliases": {
                 "AI": "Kwakuofosuagyeman\\AIAssistant\\Facades\\AI"
             }
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
         }
     }
 }
