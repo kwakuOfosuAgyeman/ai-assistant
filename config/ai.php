@@ -24,6 +24,11 @@ return [
                 'model' => 'claude-3-5-sonnet-20241022',
                 'version' => 'version',
 
+            ],
+            'gemini' => [
+                'api_key' => env('GEMINI_API_KEY'),
+                'base_url' => 'https://generativelanguage.googleapis.com/v1beta/models/',
+                'default_model' => 'gemini-1.5-flash:generateContent',
             ]
         ],
     ]

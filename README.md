@@ -1,6 +1,6 @@
 # AI Service Package
 
-This package provides a unified interface to interact with various AI services, including OpenAI, HuggingFace, and Claude. It is designed for Laravel applications and offers an extensible and configurable solution for AI-powered functionality such as text generation, embeddings, and more.
+This package provides a unified interface to interact with various AI services, including OpenAI, HuggingFace, Gemini and Claude. It is designed for Laravel applications and offers an extensible and configurable solution for AI-powered functionality such as text generation, embeddings, and more.
 
 ---
 
@@ -192,7 +192,7 @@ Generates code. This has a default temperature of 0.2
 $text = 'Generate python code to reverse a string';
 
 
-$response = $aiService->provider('openai')->translateText($prompt);
+$response = $aiService->provider('openai')->generateCode($prompt);
 ```
 
 
