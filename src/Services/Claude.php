@@ -5,22 +5,29 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use Exception;
 use Psr\Log\LoggerInterface;
-use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Client;
 
 
 class ClaudeAIService implements AIService {
-    protected ClientInterface $client;
     protected string $baseUrl;
     protected LoggerInterface $logger;
 
-    public function __construct(ClientInterface $client, array $config, LoggerInterface $logger)
+    public function __construct( array $config, LoggerInterface $logger)
     {
-        if (empty($config['api_key']) || empty($config['base_url'])) {
+        $this->apiKey = config('ai.providers.claude.api_key');
+        $this->baseUrl = config('ai.providers.claude.base_url');
+
+        if (empty($this->apiKey) || empty($this->baseUrl)) {
             throw new \InvalidArgumentException("API key and base URL are required in configuration.");
         }
 
-        $this->client = $client;
-        $this->baseUrl = rtrim($config['base_url'], '/');
+        $this->client = new Client([
+            'base_url' => $this->baseUrl,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Accept' => 'application/json',
+            ],
+        ]);
         $this->logger = $logger;
     }
 

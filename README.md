@@ -6,7 +6,7 @@ This package provides a unified interface to interact with various AI services, 
 
 ## Features
 
-- **Multi-Provider Support**: Interact with OpenAI, HuggingFace, and Claude.
+- **Multi-Provider Support**: Interact with OpenAI, HuggingFace, Gemini, and Claude.
 - **Centralized Configuration**: Manage settings from a single `config/ai.php` file.
 - **Extensible Interface**: Add support for new AI providers with ease.
 - **Error Handling**: Includes `try...catch` blocks to handle API errors gracefully.
@@ -54,10 +54,20 @@ return [
         ],
         'huggingface' => [
             'api_key' => env('HUGGINGFACE_API_KEY'),
+            'base_url' => 'https://api-inference.huggingface.co/models/',
         ],
         'claude' => [
             'api_key' => env('CLAUDE_API_KEY'),
+            'base_url' => 'https://api.anthropic.com/v1/',
+            'default_max_tokens' => 150,
+            'model' => 'claude-3-5-sonnet-20241022',
+            'version' => 'version',
         ],
+        'gemini' => [
+            'api_key' => env('GEMINI_API_KEY'),
+            'base_url' => 'https://generativelanguage.googleapis.com/v1beta/models/',
+            'default_model' => 'gemini-1.5-flash:generateContent',
+        ]
     ]
     
 ];
@@ -195,7 +205,32 @@ $text = 'Generate python code to reverse a string';
 $response = $aiService->provider('openai')->generateCode($prompt);
 ```
 
+### Gemini
 
+### `generateText(string $prompt, array $options = []): array`
+Generates text based on the given prompt.
+
+```php
+$response = $aiService->provider('gemini')->generateText('Tell me a story about space exploration.');
+
+echo $response['data'];
+```
+
+### `transcribeAudio(string $audioPath, array $options = []): array`
+Transcribes the given audio into text. 
+
+```php
+$audio = "path/to/audio";
+
+
+$response = $aiService->provider('gemini')->transcribeAudio($audio);
+
+```
+
+### Claude
+
+
+### Hugging Face
 
 ---
 
@@ -240,7 +275,7 @@ class OpenAIServiceTest extends TestCase
     public function testGenerateText()
     {
         $aiService = $this->app->make(AIService::class);
-        $response = $aiService->provider('provider')->generateText('Test prompt');
+        $response = $aiService->provider('openai')->generateText('Test prompt');
 
         $this->assertArrayHasKey('data', $response);
     }
