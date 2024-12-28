@@ -4,15 +4,14 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use Exception;
-use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
 
 
 class ClaudeAIService implements AIService {
     protected string $baseUrl;
-    protected LoggerInterface $logger;
+    protected string $apiKey;
 
-    public function __construct( array $config, LoggerInterface $logger)
+    public function __construct()
     {
         $this->apiKey = config('ai.providers.claude.api_key');
         $this->baseUrl = config('ai.providers.claude.base_url');
@@ -28,7 +27,6 @@ class ClaudeAIService implements AIService {
                 'Accept' => 'application/json',
             ],
         ]);
-        $this->logger = $logger;
     }
 
     public function generateText(string $prompt, array $options = []): array
@@ -49,21 +47,19 @@ class ClaudeAIService implements AIService {
 
             return $responseBody;
         } catch (Exception $e) {
-            $this->logger->error('ClaudeAIService: Error generating text', [
-                'error' => $e->getMessage(),
-                'prompt' => $prompt,
-                'options' => $options,
-            ]);
-
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
     /**
      * Analyzes a document and answers a query about it.
      */
-    public function analyzeDocumentWithQuery(string $fileUrl, string $query, string $model = '', string $version = ''): array
+    public function analyzeDocumentWithQuery(string $fileUrl, array $options = []): array
     {
+        $query = $option['query'] ?? 'Analyze this document';
+        $model =  $option['model'] ?? config('ai.providers.claude.model') ;
+        $version = $option['version'] ?? config('ap.providers.claude.version'); 
+        $max_tokens = $option['max_tokens'] ?? 1024;
         try {
             // Step 1: Fetch the file and encode it in Base64
             $fileContent = file_get_contents($fileUrl);
@@ -75,8 +71,8 @@ class ClaudeAIService implements AIService {
 
             // Step 2: Prepare the JSON payload
             $payload = [
-                'model' => $model ?? config('ai.providers.claude.model'),
-                'max_tokens' => 1024,
+                'model' => $model ,
+                'max_tokens' => $max_tokens,
                 'messages' => [
                     [
                         'role' => 'user',
@@ -106,8 +102,8 @@ class ClaudeAIService implements AIService {
             $response = $this->client->post($this->baseUrl, [
                 'headers' => [
                     'content-type' => 'application/json',
-                    'x-api-key' => config('api.providers.claude.api_key'),
-                    'anthropic-version' => $version ?? config('ap.providers.claude.version'),
+                    'x-api-key' => $this->api_key,
+                    'anthropic-version' => $version ,
                 ],
                 'json' => $payload,
             ]);
@@ -115,21 +111,9 @@ class ClaudeAIService implements AIService {
             // Step 4: Parse and return the response
             $responseBody = json_decode($response->getBody()->getContents(), true);
 
-            $this->logger->info('ClaudeAIService: Document analysis successful.', [
-                'fileUrl' => $fileUrl,
-                'query' => $query,
-                'response' => $responseBody,
-            ]);
-
             return $responseBody;
         } catch (Exception $e) {
-            $this->logger->error('ClaudeAIService: Error analyzing document', [
-                'error' => $e->getMessage(),
-                'fileUrl' => $fileUrl,
-                'query' => $query,
-            ]);
-
-            return ['error' => 'An error occurred while processing the document analysis.'];
+            return ['error' => $e->getMessage()];
         }
     }
 }

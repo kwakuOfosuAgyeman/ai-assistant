@@ -1,12 +1,12 @@
 # AI Service Package
 
-This package provides a unified interface to interact with various AI services, including OpenAI, HuggingFace, Gemini and Claude. It is designed for Laravel applications and offers an extensible and configurable solution for AI-powered functionality such as text generation, embeddings, and more.
+This package provides a unified interface to interact with various AI services, including OpenAI, Gemini and Claude. It is designed for Laravel applications and offers an extensible and configurable solution for AI-powered functionality such as text generation, embeddings, and more.
 
 ---
 
 ## Features
 
-- **Multi-Provider Support**: Interact with OpenAI, HuggingFace, Gemini, and Claude.
+- **Multi-Provider Support**: Interact with OpenAI, Gemini, and Claude.
 - **Centralized Configuration**: Manage settings from a single `config/ai.php` file.
 - **Extensible Interface**: Add support for new AI providers with ease.
 - **Error Handling**: Includes `try...catch` blocks to handle API errors gracefully.
@@ -51,10 +51,6 @@ return [
             'chat_model' => 'gpt-4',
             'embedding_model' => 'text-embedding-ada-002',
             'default_temperature' => 0.7,
-        ],
-        'huggingface' => [
-            'api_key' => env('HUGGINGFACE_API_KEY'),
-            'base_url' => 'https://api-inference.huggingface.co/models/',
         ],
         'claude' => [
             'api_key' => env('CLAUDE_API_KEY'),
@@ -136,7 +132,7 @@ class ExampleController extends Controller
 Generates text based on the given prompt.
 
 ```php
-$response = $aiService->provider('openai')->generateText('Tell me a story about space exploration.', [
+$response = $aiService->resolveService('openai')->generateText('Tell me a story about space exploration.', [
     'temperature' => 0.8,
     'max_tokens' => 200,
 ]);
@@ -148,7 +144,7 @@ echo $response['data'];
 Generates embeddings for the given text. This uses the `text-embedding-ada-002` by default.
 
 ```php
-$response = $aiService->provider('openai')->generateEmbeddings('Artificial Intelligence');
+$response = $aiService->resolveService('openai')->generateEmbeddings('Artificial Intelligence');
 
 print_r($response['data']);
 ```
@@ -162,7 +158,7 @@ $messages = [
     ['role' => 'assistant', 'content' => 'The capital of France is Paris.'],
 ];
 
-$response = $aiService->provider('openai')->chat($messages);
+$response = $aiService->resolveService('openai')->chat($messages);
 
 echo $response['data']['content'];
 ```
@@ -173,7 +169,7 @@ Analyze the sentiment of a text. The labels given to the ai are ['negative', 'ne
 ```php
 $text = 'Text to analyze';
 
-$response = $aiService->provider('openai')->analyzeSentiment($text);
+$response = $aiService->resolveService('openai')->analyzeSentiment($text);
 ```
 
 ### `summarizeText(string $text, array $options = []): array`
@@ -182,7 +178,7 @@ Transcribes audio files.
 ```php
 $text = 'Text to summarize';
 
-$response = $aiService->provider('openai')->summarizeText($text);
+$response = $aiService->resolveService('openai')->summarizeText($text);
 ```
 
 ### `translateText(string $text, string $targetLanguage, array $options = []): array`
@@ -192,7 +188,7 @@ Translates text from its current language to the targetLanguage.
 $text = 'Text to translate';
 $targetLangugae = 'French';
 
-$response = $aiService->provider('openai')->translateText($text, $targetLanguage);
+$response = $aiService->resolveService('openai')->translateText($text, $targetLanguage);
 ```
 
 ### `generateCode(string $prompt, array $options = []): array`
@@ -202,7 +198,7 @@ Generates code. This has a default temperature of 0.2
 $text = 'Generate python code to reverse a string';
 
 
-$response = $aiService->provider('openai')->generateCode($prompt);
+$response = $aiService->resolveService('openai')->generateCode($prompt);
 ```
 
 ### Gemini
@@ -211,7 +207,7 @@ $response = $aiService->provider('openai')->generateCode($prompt);
 Generates text based on the given prompt.
 
 ```php
-$response = $aiService->provider('gemini')->generateText('Tell me a story about space exploration.');
+$response = $aiService->resolveService('gemini')->generateText('Tell me a story about space exploration.');
 
 echo $response['data'];
 ```
@@ -223,14 +219,13 @@ Transcribes the given audio into text.
 $audio = "path/to/audio";
 
 
-$response = $aiService->provider('gemini')->transcribeAudio($audio);
+$response = $aiService->resolveService('gemini')->transcribeAudio($audio);
 
 ```
 
 ### Claude
 
 
-### Hugging Face
 
 ---
 
@@ -275,7 +270,7 @@ class OpenAIServiceTest extends TestCase
     public function testGenerateText()
     {
         $aiService = $this->app->make(AIService::class);
-        $response = $aiService->provider('openai')->generateText('Test prompt');
+        $response = $aiService->resolveService('openai')->generateText('Test prompt');
 
         $this->assertArrayHasKey('data', $response);
     }

@@ -13,10 +13,6 @@ return [
                 'embedding_model' => 'text-embedding-ada-002',
                 'default_temperature' => 0.7,
             ],
-            'huggingface' => [
-                'api_key' => env('HUGGINGFACE_API_KEY'),
-                'base_url' => 'https://api-inference.huggingface.co/models/',
-            ],
             'claude' => [
                 'api_key' => env('CLAUDE_API_KEY'),
                 'base_url' => 'https://api.anthropic.com/v1/',

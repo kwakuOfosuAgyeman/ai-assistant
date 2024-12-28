@@ -4,7 +4,6 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use OpenAI\Client;
-use Psr\Log\LoggerInterface;
 use Exception;
 
 class OpenAIService implements AIService
@@ -13,7 +12,9 @@ class OpenAIService implements AIService
 
     public function __construct(Client $client)
     {
-        $this->client = $client;
+        $this->client = Client::factory([
+            'api_key' => config('ai.providers.openai.api_key'),
+        ]);;
     }
 
     /**
@@ -30,12 +31,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error generating text', [
-                'error' => $e->getMessage(),
-                'prompt' => $prompt,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -52,12 +48,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error generating chat', [
-                'error' => $e->getMessage(),
-                'conversation' => $conversation,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -74,12 +65,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error analyzing sentiment', [
-                'error' => $e->getMessage(),
-                'text' => $text,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -97,12 +83,8 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error summarizing text', [
-                'error' => $e->getMessage(),
-                'prompt' => "Summarize the following text:\n\n" . $text,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -120,12 +102,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error translating text', [
-                'error' => $e->getMessage(),
-                'prompt' => "Translate the following text to {$targetLanguage}:\n\n" . $text,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -141,12 +118,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error generating embeddings', [
-                'error' => $e->getMessage(),
-                'text' => $text,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -164,12 +136,7 @@ class OpenAIService implements AIService
             ]);
             return $response->toArray();
         } catch (Exception $e) {
-            $this->logger->error('OpenAIService: Error generating code', [
-                'error' => $e->getMessage(),
-                'prompt' => $prompt,
-                'options' => $options,
-            ]);
-            return ['error' => 'An error occurred while processing the request.'];
+            return ['error' => $e->getMessage()];
         }
     }
 }

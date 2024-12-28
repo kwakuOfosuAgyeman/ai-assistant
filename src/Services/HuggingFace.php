@@ -5,6 +5,9 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 use GuzzleHttp\Client;
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 
+/**
+ * In Development
+ */
 class HuggingFace implements AIService
 {
     protected $client;
