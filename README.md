@@ -73,22 +73,35 @@ return [
 
 ## Usage
 
-### Step 1: Register the Service
-Bind the desired AI service in your `AppServiceProvider` or another service provider:
+### Method 1: Use the Service in Your Application
+Use the required service where needed, such as in controllers or other services:
 
 ```php
 use Kwakuofosuagyeman\AIAssistant\Services\OpenAIService;
-use OpenAI\Client;
 
-public function register()
+class ExampleController extends Controller
 {
-    $this->app->bind(AIService::class, function () {
-        return new OpenAIService(new Client(['api_key' => config('ai.openai.api_key')]));
-    });
+    protected $aiManager;
+
+
+    public function generateText(Request $request)
+    {
+        $prompt = $request->input('prompt');
+
+        try {
+            $openAIService = new OpenAIService();
+            $response = $openAIService->generateText("Write a poem about the sea.");
+
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }
+
 ```
 
-### Step 2: Use the Service in Your Application
+### Method 2: Use the Service in Your Application (If you wish to use multiple AI providers)
 Inject the `AIService` interface where needed, such as in controllers or other services:
 
 ```php
@@ -119,6 +132,8 @@ class ExampleController extends Controller
 }
 
 ```
+
+
 
 ---
 

@@ -10,8 +10,11 @@ class OpenAIService implements AIService
 {
     protected Client $client;
 
-    public function __construct(Client $client)
+    public function __construct()
     {
+        if (empty($this->apiKey)) {
+            throw new \InvalidArgumentException("API key is required in configuration.");
+        }
         $this->client = Client::factory([
             'api_key' => config('ai.providers.openai.api_key'),
         ]);;
