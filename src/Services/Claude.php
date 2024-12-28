@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 class ClaudeAIService implements AIService {
     protected string $baseUrl;
     protected string $apiKey;
+    protected Client $client;
 
     public function __construct()
     {
@@ -54,11 +55,11 @@ class ClaudeAIService implements AIService {
     /**
      * Analyzes a document and answers a query about it.
      */
-    public function analyzeDocumentWithQuery(string $fileUrl, array $options = []): array
+    public function analyzeDocumentWithQuery(string $fileUrl, array $options): array
     {
         $query = $option['query'] ?? 'Analyze this document';
         $model =  $option['model'] ?? config('ai.providers.claude.model') ;
-        $version = $option['version'] ?? config('ap.providers.claude.version'); 
+        $version = $option['version'] ?? config('ai.providers.claude.version'); 
         $max_tokens = $option['max_tokens'] ?? 1024;
         try {
             // Step 1: Fetch the file and encode it in Base64
@@ -116,4 +117,40 @@ class ClaudeAIService implements AIService {
             return ['error' => $e->getMessage()];
         }
     }
+
+    public function useTool(array $messages, array $options): array
+    {
+        $version = $options['version'] ?? config('ai.providers.claude.version'); 
+        $maxTokens = $options['maxTokens'] ?? 1024;
+        $model = $options['model'] ?? config('ai.providers.claude.model');
+
+        $tool = $options['tool']; 
+        if (empty($tool) ) {
+            throw new \InvalidArgumentException("Tool is a required option in configuration.");
+        }
+
+        try {
+            $response = $this->client->post($this->baseUrl, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $version,
+                ],
+                'json' => [
+                    'model' => $model,
+                    'max_tokens' => $maxTokens,
+                    'tools' => $tool,
+                    'messages' => $messages,
+                ],
+            ]);
+
+            return json_decode($response->getBody()->getContents(), true);
+        } catch (Exception $e) {
+            return [
+                'error' => true,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
 }

@@ -85,4 +85,14 @@ interface AIService
      * Classify text into predefined categories.
      */
     public function classifyText(string $text, array $categories, array $options = []): array;
+
+    /**
+     * Use a tool with a prompt
+     */
+    public function useTool(array $messages, array $options): array;
+
+    /**
+     * Analyze the document with a query
+     */
+    public function analyzeDocumentWithQuery(string $fileUrl, array $options): array;
 }

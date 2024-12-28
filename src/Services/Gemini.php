@@ -8,9 +8,9 @@ use Exception;
 
 class GeminiService implements AIService
 {
-    protected $client;
-    protected $apiKey;
-    protected $baseUrl;
+    protected Client $client;
+    protected string $apiKey;
+    protected string $baseUrl;
 
     public function __construct()
     {
