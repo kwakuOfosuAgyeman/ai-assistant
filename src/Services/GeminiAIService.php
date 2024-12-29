@@ -39,6 +39,10 @@ class GeminiAIService
             $response = $this->client->post(
                 $endpoint,
                 [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $this->apiKey,
+                        'Accept' => 'application/json',
+                    ],
                     'json' => [
                         'contents' => [
                             [
