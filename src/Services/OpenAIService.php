@@ -17,7 +17,7 @@ class OpenAIService
         if (empty($this->apiKey)) {
             throw new \InvalidArgumentException("API key is required in configuration.");
         }
-        $this->client = Client::factory([
+        $this->client = new Client([
             'api_key' => config('ai.providers.openai.api_key'),
         ]);;
     }
