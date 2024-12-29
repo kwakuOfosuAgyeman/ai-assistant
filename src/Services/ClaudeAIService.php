@@ -31,9 +31,10 @@ class ClaudeAIService{
         ]);
     }
 
-    public function generateText(string $prompt, array $options = []): array
+    public function generateText(array $messages, array $options): array
     {
         $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
+        $model = $option['model'] ?? config('api.providers.claude.model');
         $stream = $option['stream'] ?? false;
         try {
             $response = $this->client->post($this->baseUrl, [
