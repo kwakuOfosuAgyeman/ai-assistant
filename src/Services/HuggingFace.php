@@ -8,7 +8,7 @@ use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 /**
  * In Development
  */
-class HuggingFace implements AIService
+class HuggingFace
 {
     protected $client;
     protected $baseUrl;

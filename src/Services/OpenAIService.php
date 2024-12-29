@@ -6,7 +6,7 @@ use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use OpenAI\Client;
 use Exception;
 
-class OpenAIService implements AIService
+class OpenAIService
 {
     protected Client $client;
 

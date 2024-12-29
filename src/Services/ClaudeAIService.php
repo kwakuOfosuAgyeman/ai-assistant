@@ -7,7 +7,7 @@ use Exception;
 use GuzzleHttp\Client;
 
 
-class ClaudeAIService implements AIService {
+class ClaudeAIService{
     protected string $baseUrl;
     protected string $apiKey;
     protected Client $client;
