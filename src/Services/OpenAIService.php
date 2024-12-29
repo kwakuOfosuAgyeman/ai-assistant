@@ -9,9 +9,11 @@ use Exception;
 class OpenAIService
 {
     protected Client $client;
+    protected string $apiKey;
 
     public function __construct()
     {
+        $this->apiKey = config('ai.providers.openai.api_key');
         if (empty($this->apiKey)) {
             throw new \InvalidArgumentException("API key is required in configuration.");
         }
