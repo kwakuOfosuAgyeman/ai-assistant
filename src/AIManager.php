@@ -2,9 +2,9 @@
 
 namespace Kwakuofosuagyeman\AIAssistant;
 
-use Kwakuofosuagyeman\AIAssistant\Services\OpenAI;
-use Kwakuofosuagyeman\AIAssistant\Services\HuggingFace;
-use Kwakuofosuagyeman\AIAssistant\Services\Claude;
+use Kwakuofosuagyeman\AIAssistant\Services\OpenAIService;
+use Kwakuofosuagyeman\AIAssistant\Services\GeminiAIService;
+use Kwakuofosuagyeman\AIAssistant\Services\ClaudeAIService;
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 
 class AIManager
@@ -35,9 +35,8 @@ class AIManager
         // Create the service instance.
         $service = match ($provider) {
             'openai' => new OpenAIService(),
-            'huggingface' => new HuggingFaceService(),
-            'claude' => new ClaudeService(),
-            'gemini' => new GeminiService(),
+            'claude' => new ClaudeAIService(),
+            'gemini' => new GeminiAIService(),
             default => throw new \InvalidArgumentException("Unsupported AI provider: $provider"),
         };
 

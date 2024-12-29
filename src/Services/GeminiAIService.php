@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 use YourVendor\AIAssistant\Contracts\AIService;
 use Exception;
 
-class GeminiService implements AIService
+class GeminiAIService implements AIService
 {
     protected Client $client;
     protected string $apiKey;
