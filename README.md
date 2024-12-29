@@ -44,26 +44,32 @@ The `config/ai.php` file contains all the settings for the supported AI provider
 
 ```php
 return [
+    'default' => 'openai',
     'providers' => [
-        'openai' => [
-            'api_key' => env('OPENAI_API_KEY'),
-            'default_model' => 'text-davinci-003',
-            'chat_model' => 'gpt-4',
-            'embedding_model' => 'text-embedding-ada-002',
-            'default_temperature' => 0.7,
+        'services' => [
+            'openai' => [
+                'api_key' => env('OPENAI_API_KEY'),
+                'default_model' => 'text-davinci-003',
+                'chat_model' => 'gpt-4',
+                'default_max_tokens' => 150,
+                'embedding_model' => 'text-embedding-ada-002',
+                'default_temperature' => 0.7,
+            ],
+            'claude' => [
+                'api_key' => env('CLAUDE_API_KEY'),
+                'base_url' => 'https://api.anthropic.com/v1/messages/',
+                'default_max_tokens' => 1024,
+                'batch_url' => 'https://api.anthropic.com/v1/messages/batches/',
+                'model' => 'claude-3-5-sonnet-20241022',
+                'version' => env('CLAUDE_API_VERSION'),
+
+            ],
+            'gemini' => [
+                'api_key' => env('GEMINI_API_KEY'),
+                'base_url' => 'https://generativelanguage.googleapis.com/v1beta/models/',
+                'default_model' => 'gemini-1.5-flash:generateContent',
+            ]
         ],
-        'claude' => [
-            'api_key' => env('CLAUDE_API_KEY'),
-            'base_url' => 'https://api.anthropic.com/v1/',
-            'default_max_tokens' => 150,
-            'model' => 'claude-3-5-sonnet-20241022',
-            'version' => 'version',
-        ],
-        'gemini' => [
-            'api_key' => env('GEMINI_API_KEY'),
-            'base_url' => 'https://generativelanguage.googleapis.com/v1beta/models/',
-            'default_model' => 'gemini-1.5-flash:generateContent',
-        ]
     ]
     
 ];
@@ -240,7 +246,139 @@ $response = $aiService->resolveService('gemini')->transcribeAudio($audio);
 
 ### Claude
 
+### Generate Text
+Use the generateText method to generate AI responses based on a text prompt.
 
+```php
+use Kwakuofosuagyeman\AIAssistant\Services\ClaudeAIService;
+
+$aiService = new ClaudeAIService();
+
+$prompt = "Write a short story about a brave cat.";
+$options = ['maxTokens' => 150];
+
+$response = $aiService->generateText($prompt, $options);
+
+if (isset($response['error'])) {
+    echo "Error: " . $response['error'];
+} else {
+    echo "Generated Text: " . $response['content'];
+}
+```
+
+### Analyze a Document with a Query
+### Analyze a document (e.g., a PDF file) and provide answers to a query about its content.
+
+```php
+$fileUrl = 'https://example.com/path-to-document.pdf';
+$options = ['query' => 'Summarize the main points of this document.'];
+
+$response = $aiService->analyzeDocumentWithQuery($fileUrl, $options);
+
+if (isset($response['error'])) {
+    echo "Error: " . $response['error'];
+} else {
+    echo "Analysis Result: " . json_encode($response);
+}
+```
+
+### Use Tool with Messages
+### Send specific messages to the Claude AI service along with tools for interaction. This can be used for chatbots,
+
+```php
+$messages = [
+    ['role' => 'user', 'content' => 'What is the weather like in San Francisco']
+];
+$options = [
+    'tool' => [
+      {
+        "name": "get_weather",
+        "description": "Get the current weather in a given location",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "The city and state, e.g. San Francisco, CA"
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    ],
+    'maxTokens' => 1024
+];
+
+$response = $aiService->useTool($messages, $options);
+
+if (isset($response['error'])) {
+    echo "Error: " . $response['error'];
+} else {
+    echo "Tool Response: " . json_encode($response);
+}
+```
+
+### Generate Batch Messages
+### Send multiple prompts as a batch and receive responses.
+
+```php
+$batches = [
+        {
+            "custom_id": "my-first-request",
+            "params": {
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 1024,
+                "messages": [
+                    {"role": "user", "content": "Hello, world"}
+                ]
+            }
+        },
+        {
+            "custom_id": "my-second-request",
+            "params": {
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 1024,
+                "messages": [
+                    {"role": "user", "content": "Hi again, friend"}
+                ]
+            }
+        }
+    ];
+
+$response = $aiService->generateBatchMessages($batches);
+
+if (isset($response['error'])) {
+    echo "Error: " . $response['error'];
+} else {
+    echo "Batch Responses: " . json_encode($response);
+}
+```
+
+### Manage Batch Requests
+
+List Batch Requests:
+```php
+$response = $aiService->listBatchMessages();
+echo json_encode($response);
+```
+
+
+### Retrieve a Batch Result:
+```php
+
+$token = 'batch-id';
+$response = $aiService->getBatchMessagesResult($token);
+echo json_encode($response);
+```
+
+### Cancel a Batch Request:
+
+```php
+
+$token = 'batch-id';
+$response = $aiService->cancelMessageBatch($token);
+echo json_encode($response);
+```
 
 ---
 

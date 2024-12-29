@@ -16,8 +16,9 @@ class ClaudeAIService implements AIService {
     {
         $this->apiKey = config('ai.providers.claude.api_key');
         $this->baseUrl = config('ai.providers.claude.base_url');
+        $this->version = config('ai.providers.claude.version');
 
-        if (empty($this->apiKey) || empty($this->baseUrl)) {
+        if (empty($this->apiKey) || empty($this->baseUrl) || empty($this->version)) {
             throw new \InvalidArgumentException("API key and base URL are required in configuration.");
         }
 
@@ -32,11 +33,21 @@ class ClaudeAIService implements AIService {
 
     public function generateText(string $prompt, array $options = []): array
     {
+        $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
+        $stream = $option['stream'] ?? false;
         try {
-            $payload = array_merge(['inputs' => $prompt], $options);
-
             $response = $this->client->post($this->baseUrl, [
-                'json' => $payload,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+                'json' => [
+                    'model' => $model,
+                    'max_tokens' => $maxTokens,
+                    'messages' => $messages,
+                    'stream' => $stream,
+                ],
             ]);
 
             $responseBody = json_decode($response->getBody()->getContents(), true);
@@ -59,7 +70,6 @@ class ClaudeAIService implements AIService {
     {
         $query = $option['query'] ?? 'Analyze this document';
         $model =  $option['model'] ?? config('ai.providers.claude.model') ;
-        $version = $option['version'] ?? config('ai.providers.claude.version'); 
         $max_tokens = $option['max_tokens'] ?? 1024;
         try {
             // Step 1: Fetch the file and encode it in Base64
@@ -104,7 +114,7 @@ class ClaudeAIService implements AIService {
                 'headers' => [
                     'content-type' => 'application/json',
                     'x-api-key' => $this->api_key,
-                    'anthropic-version' => $version ,
+                    'anthropic-version' => $this->version ,
                 ],
                 'json' => $payload,
             ]);
@@ -120,9 +130,9 @@ class ClaudeAIService implements AIService {
 
     public function useTool(array $messages, array $options): array
     {
-        $version = $options['version'] ?? config('ai.providers.claude.version'); 
         $maxTokens = $options['maxTokens'] ?? 1024;
         $model = $options['model'] ?? config('ai.providers.claude.model');
+        $stream = $options['stream'] ?? false;
 
         $tool = $options['tool']; 
         if (empty($tool) ) {
@@ -134,13 +144,14 @@ class ClaudeAIService implements AIService {
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $version,
+                    'anthropic-version' => $this->version,
                 ],
                 'json' => [
                     'model' => $model,
                     'max_tokens' => $maxTokens,
                     'tools' => $tool,
                     'messages' => $messages,
+                    'stream' => $stream,
                 ],
             ]);
 
@@ -150,6 +161,129 @@ class ClaudeAIService implements AIService {
                 'error' => true,
                 'message' => $e->getMessage(),
             ];
+        }
+    }
+
+    public function generateBatchMessages(array $batches, array $options): array
+    {
+        $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
+        $stream = $option['stream'] ?? false;
+        try {
+            $response = $this->client->post(config('api.providers.claude.batch_url'), [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+                'requests' => $batches,
+            ]);
+
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function getBatchMessages(string $token): array
+    {
+        try {
+            $response = $this->client->get(config('api.providers.claude.batch_url') . $token, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+            ]);
+
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function getBatchMessagesResult(string $token): array
+    {
+        try {
+            $response = $this->client->get(config('api.providers.claude.batch_url') . $token . '/results', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+            ]);
+
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function listBatchMessages(): array
+    {
+        try {
+            $response = $this->client->get(config('api.providers.claude.batch_url'), [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+            ]);
+
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function cancelMessageBatch(string $token): array
+    {
+        try {
+            $response = $this->client->get(config('api.providers.claude.batch_url') . $token . '/cancel', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $this->apiKey,
+                    'anthropic-version' => $this->version,
+                ],
+            ]);
+
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
         }
     }
 

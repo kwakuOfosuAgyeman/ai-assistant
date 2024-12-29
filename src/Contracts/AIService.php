@@ -95,4 +95,29 @@ interface AIService
      * Analyze the document with a query
      */
     public function analyzeDocumentWithQuery(string $fileUrl, array $options): array;
+
+    /**
+     * Generate a message batch
+     */
+    public function generateBatchMessages(array $batches, array $options): array;
+
+    /**
+     * Get details on batch request made
+     */
+    public function getBatchMessages(string $token): array;
+
+    /**
+     * Get result details on batch request
+     */
+    public function getBatchMessagesResult(string $token): array;
+
+    /**
+     * Get a list of all batch messages
+     */
+    public function listBatchMessages(): array;
+
+    /**
+     * Cancel a batch message
+     */
+    public function cancelMessageBatch(string $token): array;
 }
