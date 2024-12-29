@@ -1,9 +1,9 @@
 <?php
 
-namespace YourVendor\AIAssistant\Services;
+namespace Kwakuofosuagyeman\AIAssistant\Services;
 
 use GuzzleHttp\Client;
-use YourVendor\AIAssistant\Contracts\AIService;
+use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use Exception;
 
 class GeminiAIService
