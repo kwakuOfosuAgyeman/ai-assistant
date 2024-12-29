@@ -19,7 +19,7 @@ class ClaudeAIService{
         $this->version = config('ai.providers.claude.version');
 
         if (empty($this->apiKey) || empty($this->baseUrl) || empty($this->version)) {
-            throw new \InvalidArgumentException("API key and base URL are required in configuration.");
+            throw new \InvalidArgumentException("API key, Version and base URL are required in configuration.");
         }
 
         $this->client = new Client([
