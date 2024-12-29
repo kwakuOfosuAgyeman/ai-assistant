@@ -34,9 +34,10 @@ class AIManager
 
         // Create the service instance.
         $service = match ($provider) {
-            'openai' => new OpenAIService(['api_key' => $config['api_key']]),
-            'huggingface' => new HuggingFaceService($config['api_key']),
-            'claude' => new ClaudeService($config['api_key']),
+            'openai' => new OpenAIService(),
+            'huggingface' => new HuggingFaceService(),
+            'claude' => new ClaudeService(),
+            'gemini' => new GeminiService(),
             default => throw new \InvalidArgumentException("Unsupported AI provider: $provider"),
         };
 
