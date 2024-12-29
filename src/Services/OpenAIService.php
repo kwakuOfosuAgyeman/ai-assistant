@@ -3,7 +3,7 @@
 namespace Kwakuofosuagyeman\AIAssistant\Services;
 
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
-use OpenAI\Client;
+use OpenAI;
 use Exception;
 
 class OpenAIService
@@ -17,9 +17,7 @@ class OpenAIService
         if (empty($this->apiKey)) {
             throw new \InvalidArgumentException("API key is required in configuration.");
         }
-        $this->client = new Client([
-            'api_key' => config('ai.providers.openai.api_key'),
-        ]);;
+        $this->client = OpenAI::client($this->apiKey);
     }
 
     /**
