@@ -8,7 +8,7 @@ use Exception;
 
 class OpenAIService
 {
-    protected Client $client;
+    protected $client;
     protected string $apiKey;
 
     public function __construct()
