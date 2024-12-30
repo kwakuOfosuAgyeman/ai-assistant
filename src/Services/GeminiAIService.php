@@ -23,26 +23,18 @@ class GeminiAIService
         $this->defaultModel = config('ai.providers.gemini.default_model') ?? $model;
         $this->client = new Client([
             'base_url' => $this->baseUrl,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Accept' => 'application/json',
-            ],
         ]);
     }
 
     public function generateText(string $prompt, array $options = []): array
     {
         $modelToUse = $option['model'] ?? $this->defaultModel;
-        $endpoint = sprintf('%smodels/%s', $this->baseUrl, $modelToUse);
+        $endpoint = sprintf('%smodels/%s?key=%s', $this->baseUrl, $modelToUse, $this->apiKey);
 
         try {
             $response = $this->client->post(
                 $endpoint,
                 [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $this->apiKey,
-                        'Accept' => 'application/json',
-                    ],
                     'json' => [
                         'contents' => [
                             [
