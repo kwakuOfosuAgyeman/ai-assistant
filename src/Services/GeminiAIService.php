@@ -33,7 +33,7 @@ class GeminiAIService
     public function generateText(string $prompt, array $options = []): array
     {
         $modelToUse = $option['model'] ?? $this->defaultModel;
-        $endpoint = sprintf('%smodels/%s?key=Bearer %s', $this->baseUrl, $modelToUse, $this->apiKey);
+        $endpoint = sprintf('%smodels/%s', $this->baseUrl, $modelToUse);
 
         try {
             $response = $this->client->post(
