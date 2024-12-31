@@ -1,6 +1,6 @@
 <?php
 
-namespace YourVendor\AIAssistant\Facades;
+namespace Kwakuofosuagyeman\AIAssistant\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
