@@ -9,32 +9,38 @@ on:
       - main  # Run pipeline on pull requests to the main branch
 
 jobs:
-  # 1. Code Quality Check
+  # Linting Job
   lint:
     name: PHP Linting
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [8.0, 8.1, 8.2]  # Test against multiple PHP versions
     steps:
       - uses: actions/checkout@v3
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: ${{ matrix.php }}
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse src
 
-  # 2. Unit Tests
+  # Testing Job
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [8.0, 8.1, 8.2]  # Test against multiple PHP versions
     steps:
       - uses: actions/checkout@v3
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
-          extensions: mbstring
+          php-version: ${{ matrix.php }}
+          extensions: mbstring  # Add required PHP extensions here
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress
       - name: Run PHPUnit Tests
