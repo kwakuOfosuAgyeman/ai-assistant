@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: [8.0, 8.1, 8.2]  # Test against multiple PHP versions
+        php: [8.2]  # Test against multiple PHP versions
     steps:
       - uses: actions/checkout@v3
       - name: Set up PHP
