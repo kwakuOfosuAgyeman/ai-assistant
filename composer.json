@@ -2,6 +2,7 @@
     "name": "kwakuofosuagyeman/ai-assistant",
     "description": "AI-powered assistant for Laravel applications",
     "type": "library",
+    "license": "MIT",
     "keywords": [
         "ai",
         "assistant",
