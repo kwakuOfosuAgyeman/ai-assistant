@@ -11,6 +11,25 @@ class GeminiAIService
     protected Client $client;
     protected string $apiKey;
     protected string $baseUrl;
+    protected string $defaultModel;
+
+    public function version(string $version)
+    {
+        $this->version = $version;
+        return $this;
+    }
+
+    public function model(string $model)
+    {
+        $this->defaultModel = $model;
+        return $this;
+    }
+
+    public function stream()
+    {
+        $this->stream = true;
+        return $this;
+    }
 
     public function __construct()
     {
@@ -20,7 +39,7 @@ class GeminiAIService
         if (empty($this->apiKey) || empty($this->baseUrl)) {
             throw new \InvalidArgumentException("API key and base URL are required in configuration.");
         }
-        $this->defaultModel = config('ai.providers.gemini.default_model') ?? $model;
+        $this->defaultModel = config('ai.providers.gemini.default_model');
         $this->client = new Client([
             'base_url' => $this->baseUrl,
         ]);
@@ -28,7 +47,7 @@ class GeminiAIService
 
     public function generateText(string $prompt, array $options = []): array
     {
-        $modelToUse = $option['model'] ?? $this->defaultModel;
+        $modelToUse = $this->defaultModel;
         $endpoint = sprintf('%smodels/%s?key=%s', $this->baseUrl, $modelToUse, $this->apiKey);
 
         try {
@@ -60,7 +79,6 @@ class GeminiAIService
 
     public function transcribeAudio(string $audioPath, array $options = []): array
     {
-        $modelToUse = $option['model'] ?? $this->defaultModel;
         $mimeType = mime_content_type($audioPath);
         $fileSize = filesize($audioPath);
         $displayName = 'AUDIO';

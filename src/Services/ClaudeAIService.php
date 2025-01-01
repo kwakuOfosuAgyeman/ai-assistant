@@ -11,12 +11,44 @@ class ClaudeAIService{
     protected string $baseUrl;
     protected string $apiKey;
     protected Client $client;
+    protected string $version;
+    protected string $model;
+    protected boolean $stream;
+    protected array $tool;
+
+
+    public function version(string $version)
+    {
+        $this->version = $version;
+        return $this;
+    }
+
+    public function model(string $model)
+    {
+        $this->model = $model;
+        return $this;
+    }
+
+    public function stream()
+    {
+        $this->stream = true;
+        return $this;
+    }
+
+    public function tool(array $tool)
+    {
+        $this->tool = $tool;
+        return $this;
+    }
+
 
     public function __construct()
     {
         $this->apiKey = config('ai.providers.claude.api_key');
         $this->baseUrl = config('ai.providers.claude.base_url');
         $this->version = config('ai.providers.claude.version');
+        $this->model = config('ai.providers.claude.model');
+        $this->stream = false;
 
         if (empty($this->apiKey) || empty($this->baseUrl) || empty($this->version)) {
             throw new \InvalidArgumentException("API key, Version and base URL are required in configuration.");
@@ -34,8 +66,6 @@ class ClaudeAIService{
     public function generateText(array $messages, array $options = []): array
     {
         $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
-        $model = $option['model'] ?? config('api.providers.claude.model');
-        $stream = $option['stream'] ?? false;
         try {
             $response = $this->client->post($this->baseUrl, [
                 'headers' => [
@@ -44,10 +74,10 @@ class ClaudeAIService{
                     'anthropic-version' => $this->version,
                 ],
                 'json' => [
-                    'model' => $model,
+                    'model' => $this->model,
                     'max_tokens' => $maxTokens,
                     'messages' => $messages,
-                    'stream' => $stream,
+                    'stream' => $this->stream,
                 ],
             ]);
 
@@ -70,7 +100,6 @@ class ClaudeAIService{
     public function analyzeDocumentWithQuery(string $fileUrl, array $options): array
     {
         $query = $option['query'] ?? 'Analyze this document';
-        $model =  $option['model'] ?? config('ai.providers.claude.model') ;
         $max_tokens = $option['max_tokens'] ?? 1024;
         try {
             // Step 1: Fetch the file and encode it in Base64
@@ -83,7 +112,7 @@ class ClaudeAIService{
 
             // Step 2: Prepare the JSON payload
             $payload = [
-                'model' => $model ,
+                'model' => $this->model ,
                 'max_tokens' => $max_tokens,
                 'messages' => [
                     [
@@ -132,11 +161,7 @@ class ClaudeAIService{
     public function useTool(array $messages, array $options): array
     {
         $maxTokens = $options['maxTokens'] ?? 1024;
-        $model = $options['model'] ?? config('ai.providers.claude.model');
-        $stream = $options['stream'] ?? false;
-
-        $tool = $options['tool']; 
-        if (empty($tool) ) {
+        if (empty($this->tool) ) {
             throw new \InvalidArgumentException("Tool is a required option in configuration.");
         }
 
@@ -148,11 +173,11 @@ class ClaudeAIService{
                     'anthropic-version' => $this->version,
                 ],
                 'json' => [
-                    'model' => $model,
+                    'model' => $this->model,
                     'max_tokens' => $maxTokens,
-                    'tools' => $tool,
+                    'tools' => $this->tool,
                     'messages' => $messages,
-                    'stream' => $stream,
+                    'stream' => $this->stream,
                 ],
             ]);
 
@@ -168,7 +193,6 @@ class ClaudeAIService{
     public function generateBatchMessages(array $batches, array $options): array
     {
         $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
-        $stream = $option['stream'] ?? false;
         try {
             $response = $this->client->post(config('api.providers.claude.batch_url'), [
                 'headers' => [
