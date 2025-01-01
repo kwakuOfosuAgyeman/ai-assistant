@@ -20,7 +20,7 @@ class GeminiAIService
         if (empty($this->apiKey) || empty($this->baseUrl)) {
             throw new \InvalidArgumentException("API key and base URL are required in configuration.");
         }
-        $this->defaultModel = config('ai.providers.gemini.default_model') ?? $model;
+        $this->defaultModel = config('ai.providers.gemini.default_model');
         $this->client = new Client([
             'base_url' => $this->baseUrl,
         ]);
