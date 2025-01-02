@@ -12,7 +12,7 @@ class AIAssistantServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../../config/ai.php', 'ai');
 
         $this->app->singleton('ai', function () {
-            return new AIManager(config('ai'));
+            return new AIManager();
         });
     }
 

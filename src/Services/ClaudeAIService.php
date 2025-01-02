@@ -5,9 +5,14 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
 use Exception;
 use GuzzleHttp\Client;
+use Kwakuofosuagyeman\AIAssistant\Traits\ClaudeRequest;
+use Kwakuofosuagyeman\AIAssistant\Traits\FileUploaderTrait;
 
 
 class ClaudeAIService{
+    use ClaudeRequest, FileUploaderTrait;
+
+
     protected string $baseUrl;
     protected string $apiKey;
     protected Client $client;
@@ -16,12 +21,6 @@ class ClaudeAIService{
     protected boolean $stream;
     protected array $tool;
 
-
-    public function version(string $version)
-    {
-        $this->version = $version;
-        return $this;
-    }
 
     public function model(string $model)
     {
@@ -46,52 +45,25 @@ class ClaudeAIService{
     {
         $this->apiKey = config('ai.providers.claude.api_key');
         $this->baseUrl = config('ai.providers.claude.base_url');
-        $this->version = config('ai.providers.claude.version');
         $this->model = config('ai.providers.claude.model');
         $this->stream = false;
 
         if (empty($this->apiKey) || empty($this->baseUrl) || empty($this->version)) {
             throw new \InvalidArgumentException("API key, Version and base URL are required in configuration.");
         }
-
-        $this->client = new Client([
-            'base_url' => $this->baseUrl,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Accept' => 'application/json',
-            ],
-        ]);
     }
 
     public function generateText(array $messages, array $options = []): array
     {
-        $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
-        try {
-            $response = $this->client->post($this->baseUrl, [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-                'json' => [
-                    'model' => $this->model,
-                    'max_tokens' => $maxTokens,
-                    'messages' => $messages,
-                    'stream' => $this->stream,
-                ],
-            ]);
+        $maxTokens = $options['maxTokens'] ?? config('ai.providers.claude.default_max_tokens');
+        $data = [
+            'model' => $this->model,
+            'max_tokens' => $maxTokens,
+            'messages' => $messages,
+            'stream' => $this->stream,
+        ];
 
-            $responseBody = json_decode($response->getBody()->getContents(), true);
-
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
-
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        return $this->sendRequest('messages', $data);
     }
 
     /**
@@ -99,8 +71,10 @@ class ClaudeAIService{
      */
     public function analyzeDocumentWithQuery(string $fileUrl, array $options): array
     {
-        $query = $option['query'] ?? 'Analyze this document';
-        $max_tokens = $option['max_tokens'] ?? 1024;
+        $query = $options['query'] ?? 'Analyze this document';
+        $maxTokens = $options['max_tokens'] ?? 1024;
+        $cacheControlMethod = $options['cacheControl'] ?? 'ephemeral';
+
         try {
             // Step 1: Fetch the file and encode it in Base64
             $fileContent = file_get_contents($fileUrl);
@@ -112,8 +86,8 @@ class ClaudeAIService{
 
             // Step 2: Prepare the JSON payload
             $payload = [
-                'model' => $this->model ,
-                'max_tokens' => $max_tokens,
+                'model' => $this->model,
+                'max_tokens' => $maxTokens,
                 'messages' => [
                     [
                         'role' => 'user',
@@ -125,9 +99,6 @@ class ClaudeAIService{
                                     'media_type' => 'application/pdf',
                                     'data' => $fileBase64,
                                 ],
-                                'cache_control' => [
-                                    "type" => "ephemeral"
-                                ]
                             ],
                             [
                                 'type' => 'text',
@@ -136,27 +107,24 @@ class ClaudeAIService{
                         ],
                     ],
                 ],
-                
+                'stream' => $this->stream, 
             ];
 
-            // Step 3: Send the API request
-            $response = $this->client->post($this->baseUrl, [
-                'headers' => [
-                    'content-type' => 'application/json',
-                    'x-api-key' => $this->api_key,
-                    'anthropic-version' => $this->version ,
-                ],
-                'json' => $payload,
-            ]);
+            // Step 3: Send the API request using the ClaudeRequest trait
+            $response = $this->sendRequest('messages', $payload, 'post');
 
-            // Step 4: Parse and return the response
-            $responseBody = json_decode($response->getBody()->getContents(), true);
+            // Step 4: Return the response or handle errors
+            if (isset($response['error'])) {
+                throw new Exception($response['error']);
+            }
 
-            return $responseBody;
+            return $response;
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
     }
+
+
 
     public function useTool(array $messages, array $options): array
     {

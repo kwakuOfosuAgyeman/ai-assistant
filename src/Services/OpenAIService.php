@@ -71,7 +71,7 @@ class OpenAIService
             $response = $this->client->classifications()->create([
                 'model' => $this->model,
                 'query' => $text,
-                'labels' => $options['labels'],
+                'labels' => $options['labels'] ?? ['Negative, Neutral, Positive'],
             ]);
             return $response->toArray();
         } catch (Exception $e) {

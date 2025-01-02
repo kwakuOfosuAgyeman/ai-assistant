@@ -8,6 +8,6 @@ class AI extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'ai';
+        return \Kwakuofosuagyeman\AIAssistant\AIManager::class;
     }
 }

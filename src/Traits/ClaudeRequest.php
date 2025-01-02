@@ -15,21 +15,32 @@ trait ClaudeRequest
      * @param string $method (optional)
      * @return array
      */
-    protected function sendRequest(string $urlSuffix, array $data, string $method = 'post')
+    protected function sendRequest(string $urlSuffix, array $data, string $method = 'post', array $headers = []): array
     {
-        $url = config('') . $urlSuffix;
+        $url = config('ai.providers.claude.base_url') . $urlSuffix;
+        $defaultHeaders = [
+            'Content-Type' => 'application/json',
+            'x-api-key' => config('ai.providers.claude.api_key'),
+            'anthropic-version' => config('ai.providers.claude.version'),
+        ];
 
-        if (!empty($data['stream']) && $data['stream'] === true) {
-            $client = new Client();
+        $client = new Client();
+        try {
             $response = $client->request($method, $url, [
+                'headers' => array_merge($defaultHeaders, $headers),
                 'json' => $data,
-                'stream' => true,
             ]);
 
-            return $response;
-        } else {
-            $response = Http::timeout(config('ollama-laravel.connection.timeout'))->$method($url, $data);
-            return $response->json();
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            // Ensure proper response structure
+            if (!is_array($responseBody)) {
+                throw new Exception("Unexpected response format from Claude AI service.");
+            }
+
+            return $responseBody;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
         }
     }
 }
