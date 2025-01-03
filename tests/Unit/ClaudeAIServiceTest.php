@@ -24,9 +24,10 @@ class ClaudeAIServiceTest extends TestCase
         $this->claudeService->method('createHttpClient')->willReturn($this->mockClient);
 
         config([
-            'ai.providers.claude.api_key' => 'test_api_key',
-            'ai.providers.claude.base_url' => 'https://example.com/api',
-            'ai.providers.claude.version' => 'v1',
+            'ai.providers.claude.api_key' => env('CLAUDE_API_KEY'),
+            'ai.providers.claude.base_url' => 'https://api.anthropic.com/v1/',
+            'ai.providers.claude.model' => 'claude-3-5-sonnet-20241022',
+            'ai.providers.claude.version' => '2023-06-01',
         ]);
     }
 

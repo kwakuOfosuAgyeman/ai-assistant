@@ -57,227 +57,113 @@ class ClaudeAIService{
     {
         $maxTokens = $options['maxTokens'] ?? config('ai.providers.claude.default_max_tokens');
         $data = [
-            'model' => $this->model,
-            'max_tokens' => $maxTokens,
-            'messages' => $messages,
-            'stream' => $this->stream,
+            'model'             => $this->model,
+            'max_tokens'        => $maxTokens,
+            'messages'          => $messages,
+            'tools'             => $this->tool ?? null,
+            'stream'            => $this->stream,
+            'metadata'          => $options['metadata'] ?? null,
+            'stop_sequences'    => $options['metadata'] ?? null,
+            'temperature'       => $options['temperature'] ?? null,
+            'system'            => $options['system'] ?? null,
+            'tool_choice'       => $options['tool_choice'] ?? null,
+            'top_k'             => $options['top_k'] ?? null,
+            'top_p'             => $options['top_p'] ?? null,
         ];
 
         return $this->sendRequest('messages', $data);
     }
 
-    /**
-     * Analyzes a document and answers a query about it.
-     */
-    public function analyzeDocumentWithQuery(string $fileUrl, array $options): array
+    public function getMessageTokens(array $messages, $options = []) : array
     {
-        $query = $options['query'] ?? 'Analyze this document';
-        $maxTokens = $options['max_tokens'] ?? 1024;
-        $cacheControlMethod = $options['cacheControl'] ?? 'ephemeral';
-
-        try {
-            // Step 1: Fetch the file and encode it in Base64
-            $fileContent = file_get_contents($fileUrl);
-            if ($fileContent === false) {
-                throw new Exception("Unable to fetch the file from {$fileUrl}");
-            }
-
-            $fileBase64 = base64_encode($fileContent);
-
-            // Step 2: Prepare the JSON payload
-            $payload = [
-                'model' => $this->model,
-                'max_tokens' => $maxTokens,
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => [
-                            [
-                                'type' => 'document',
-                                'source' => [
-                                    'type' => 'base64',
-                                    'media_type' => 'application/pdf',
-                                    'data' => $fileBase64,
-                                ],
-                            ],
-                            [
-                                'type' => 'text',
-                                'text' => $query,
-                            ],
-                        ],
-                    ],
-                ],
-                'stream' => $this->stream, 
-            ];
-
-            // Step 3: Send the API request using the ClaudeRequest trait
-            $response = $this->sendRequest('messages', $payload, 'post');
-
-            // Step 4: Return the response or handle errors
-            if (isset($response['error'])) {
-                throw new Exception($response['error']);
-            }
-
-            return $response;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        $data = [
+            'model'         => $this->model,
+            'messages'      => $messages,
+            'tool_choice'   => $options['tool_choice'] ?? null,
+            'tools'         => $this->tool ?? null,
+            'system'        => $options['system'] ?? null
+        ];
+        return $this->sendRequest('/messages/count_tokens', $data);
     }
 
-
-
-    public function useTool(array $messages, array $options): array
+    public function generateBatchMessages(array $batches): array
     {
-        $maxTokens = $options['maxTokens'] ?? 1024;
-        if (empty($this->tool) ) {
-            throw new \InvalidArgumentException("Tool is a required option in configuration.");
-        }
-
-        try {
-            $response = $this->client->post($this->baseUrl, [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-                'json' => [
-                    'model' => $this->model,
-                    'max_tokens' => $maxTokens,
-                    'tools' => $this->tool,
-                    'messages' => $messages,
-                    'stream' => $this->stream,
-                ],
-            ]);
-
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (Exception $e) {
-            return [
-                'error' => true,
-                'message' => $e->getMessage(),
-            ];
-        }
-    }
-
-    public function generateBatchMessages(array $batches, array $options): array
-    {
-        $maxTokens = $option['maxTokens'] ?? config('api.providers.claude.default_max_tokens');
-        try {
-            $response = $this->client->post(config('api.providers.claude.batch_url'), [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-                'requests' => $batches,
-            ]);
-
-            $responseBody = json_decode($response->getBody()->getContents(), true);
-
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
-
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        return $this->sendBatchRequest('messages/batches', $batches);
+           
     }
 
     public function getBatchMessages(string $token): array
     {
-        try {
-            $response = $this->client->get(config('api.providers.claude.batch_url') . $token, [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-            ]);
 
-            $responseBody = json_decode($response->getBody()->getContents(), true);
-
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
-
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        return $this->sendBatchRequest('messages/batches/' . $token, 'get');
     }
 
     public function getBatchMessagesResult(string $token): array
     {
-        try {
-            $response = $this->client->get(config('api.providers.claude.batch_url') . $token . '/results', [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-            ]);
-
-            $responseBody = json_decode($response->getBody()->getContents(), true);
-
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
-
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        return $this->sendBatchRequest('messages/batches/' . $token . '/results', 'get');
     }
 
-    public function listBatchMessages(): array
+    public function listBatchMessages(array $options = []): array
     {
-        try {
-            $response = $this->client->get(config('api.providers.claude.batch_url'), [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-            ]);
+        // Initialize query parameters array
+        $queryParams = [];
 
-            $responseBody = json_decode($response->getBody()->getContents(), true);
-
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
-
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
+        // Add parameters if provided
+        if ($options['before_id'] !== null) {
+            $queryParams['before_id'] = $options['before_id'];
         }
+        if ($options['after_id'] !== null) {
+            $queryParams['after_id'] = $options['after_id'];
+        }
+        if ($options['limit'] !== null) {
+            $queryParams['limit'] = $options['limit'];
+        }
+
+        // Build the query string from the array
+        $queryString = http_build_query($queryParams);
+
+        // Send the request with query parameters appended
+        $url = 'messages/batches?' . $queryString;
+        return $this->sendBatchRequest($url, [], 'get');
     }
 
     public function cancelMessageBatch(string $token): array
     {
-        try {
-            $response = $this->client->get(config('api.providers.claude.batch_url') . $token . '/cancel', [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'x-api-key' => $this->apiKey,
-                    'anthropic-version' => $this->version,
-                ],
-            ]);
+        return $this->sendBatchRequest('messages/batches/' . $token . '/cancel', 'get');
+    }
 
-            $responseBody = json_decode($response->getBody()->getContents(), true);
+    public function deleteMessageBatch($token) : array
+    {
+        return $this->sendBatchRequest('messages/batches/' . $token , 'delete');
+    }
 
-            // Ensure proper response structure
-            if (!is_array($responseBody)) {
-                throw new Exception("Unexpected response format from Claude AI service.");
-            }
+    public function getModels(array $options = []): array
+    {
+        // Initialize query parameters array
+        $queryParams = [];
 
-            return $responseBody;
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
+        // Add parameters if provided
+        if ($options['before_id'] !== null) {
+            $queryParams['before_id'] = $options['before_id'];
         }
+        if ($options['after_id'] !== null) {
+            $queryParams['after_id'] = $options['after_id'];
+        }
+        if ($options['limit'] !== null) {
+            $queryParams['limit'] = $options['limit'];
+        }
+
+        // Build the query string from the array
+        $queryString = http_build_query($queryParams);
+
+        // Send the request with query parameters appended
+        $url = 'models?' . $queryString;
+        return $this->sendBatchRequest($url, [], 'get');
+    }
+
+    public function getModel(string $model):array
+    {
+        return $this->sendBatchRequest('messages/batches/' . $model , 'get');
     }
 
 }
