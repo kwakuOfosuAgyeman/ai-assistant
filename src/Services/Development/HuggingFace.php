@@ -13,7 +13,7 @@ class HuggingFace
     protected $client;
     protected $baseUrl;
 
-    public function __construct(array $config)
+    private function __construct(array $config)
     {
         $this->client = new Client([
             'headers' => ['Authorization' => "Bearer {$config['api_key']}"]
@@ -21,7 +21,7 @@ class HuggingFace
         $this->baseUrl = $config['base_url'];
     }
 
-    public function generateText(string $prompt, array $options = []): array
+    private function generateText(string $prompt, array $options = []): array
     {
         $response = $this->client->post("{$this->baseUrl}your-model-name", [
             'json' => ['inputs' => $prompt],
