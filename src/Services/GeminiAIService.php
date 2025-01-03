@@ -4,10 +4,13 @@ namespace Kwakuofosuagyeman\AIAssistant\Services;
 
 use GuzzleHttp\Client;
 use Kwakuofosuagyeman\AIAssistant\Contracts\AIService;
+use Kwakuofosuagyeman\AIAssistant\Traits\GeminiRequest;
 use Exception;
 
 class GeminiAIService
 {
+    use GeminiRequest;
+
     protected Client $client;
     protected string $apiKey;
     protected string $baseUrl;
@@ -31,124 +34,260 @@ class GeminiAIService
         return $this;
     }
 
+    public function codeExecution()
+    {
+        $this->codeExecution = true;
+        return $this;
+    }
+    
+
     public function __construct()
     {
         
         $this->apiKey = config('ai.providers.gemini.api_key');
         $this->baseUrl = config('ai.providers.gemini.base_url');
+        
         if (empty($this->apiKey) || empty($this->baseUrl)) {
             throw new \InvalidArgumentException("API key and base URL are required in configuration.");
         }
         $this->defaultModel = config('ai.providers.gemini.default_model');
-        $this->client = new Client([
-            'base_url' => $this->baseUrl,
-        ]);
+        $this->codeExecution = false;
     }
 
-    public function generateText(string $prompt, array $options = []): array
+    public function chat(array $content, array $options = [])
     {
         $modelToUse = $this->defaultModel;
-        $endpoint = sprintf('%smodels/%s?key=%s', $this->baseUrl, $modelToUse, $this->apiKey);
+        $endpoint = !$stream ? sprintf('models/%s:generateContent?key=%s', $modelToUse, $this->apiKey) : sprintf('models/%s:streamContent?alt=sse&key=%s', $modelToUse, $this->apiKey);
+        $data = [
+            
+            "contents"                  => $content,
+            "safetySettings"            => $options['safetySettings'] ?? null,
+            "cachedContent"             => $options['cachedContent'] ?? null,
+            "systemInstruction"         => $options['systemInstruction'] ?? null,
+            "generationConfig" => [
+                "stopSequences"         => $options['stopSequences'] ?? null,
+                "temperature"           => $options['temperature'] ?? null,
+                "maxOutputTokens"       => $options['maxOutputTokens'] ?? null,
+                "topP"                  => $options['topP'] ?? null,
+                "topK"                  => $options['topK'] ?? null,
+                "response_mime_type"    => $options['response_mime_type'] ?? null,
+                "response_schema"       => $options['response_schema'] ?? null,
 
-        try {
-            $response = $this->client->post(
-                $endpoint,
+            ]
+        ];
+        if ($this->codeExecution === true) {
+            $data['tools'] = [['code_execution' => []]];
+        }
+        if(!empty($options['function_calling'])) {
+            $data['tools'] = $options['function_calling']['function'];
+            $data['tool_config'] = $options['tool_config'] ?? null;
+        }
+
+        return $this->sendRequest($endpoint, $data);
+        
+    }
+
+    public function generateText(string $prompt, array $options)
+    {
+        $modelToUse = $this->defaultModel;
+        $endpoint = !$stream ? sprintf('models/%s:generateContent?key=%s', $modelToUse, $this->apiKey) : sprintf('models/%s:streamContent?alt=sse&key=%s', $modelToUse, $this->apiKey);
+        $data = [
+            "contents" => [
                 [
-                    'json' => [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $prompt]
-                                ]
-                            ]
-                        ]
-                    ],
+                    "parts" => [
+                        ["text" => $prompt]
+                    ]
                 ]
-            );
+            ],
+            "cachedContent" => $options['cachedContent'] ?? null,
+            "systemInstruction" => $options['systemInstruction'] ?? null,
+            "safetySettings" => [
+                [
+                    "category" => $options['safety_category'] ?? null,
+                    "threshold" => $options['safety_threshold'] ?? null,
+                ]
+            ],
+            "generationConfig" => [
+                "stopSequences"         => $options['stopSequences'] ?? null,
+                "temperature"           => $options['temperature'] ?? null,
+                "maxOutputTokens"       => $options['maxOutputTokens'] ?? null,
+                "topP"                  => $options['topP'] ?? null,
+                "topK"                  => $options['topK'] ?? null,
+                "response_mime_type"    => $options['response_mime_type'] ?? null,
+                "response_schema"       => $options['response_schema'] ?? null,
+            ]
+        ];
+        if ($this->codeExecution === true) {
+            $data['tools'] = [['code_execution' => []]];
+        }
+        if(!empty($options['function_calling'])) {
+            $data['tools'] = $options['function_calling']['function'];
+            $data['tool_config'] = $options['tool_config'] ?? null;
+        }
 
-            return [
-                'data' => json_decode($response->getBody()->getContents(), true),
+        return $this->sendRequest($endpoint, $data);
+    }
+
+
+    public function transcribeAudio(string $audioPath, string $fileName, string $prompt = 'Describe this audio clip', array $options = []): array
+    {
+        try {
+            $modelToUse = $this->defaultModel;
+            $file = $this->uploadAudio($audioPath, $fileName);
+            $endpoint = sprintf('models/%s:generateContent?key=%s', $modelToUse, $this->apiKey);
+            $data = [
+                'contents' => 
+                [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
+                            [
+                                'file_data' => [
+                                    'mime_type' => $this->file['mimeType'],
+                                    'file_uri' => $this->file['fileUri'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                "cachedContent" => $options['cachedContent'] ?? null,
+                "systemInstruction" => $options['systemInstruction'] ?? null,
+                "safetySettings" => [
+                    [
+                        "category" => $options['safety_category'] ?? null,
+                        "threshold" => $options['safety_threshold'] ?? null,
+                    ]
+                ],
+                "generationConfig" => [
+                    "stopSequences"         => $options['stopSequences'] ?? null,
+                    "temperature"           => $options['temperature'] ?? null,
+                    "maxOutputTokens"       => $options['maxOutputTokens'] ?? null,
+                    "topP"                  => $options['topP'] ?? null,
+                    "topK"                  => $options['topK'] ?? null,
+                    "response_mime_type"    => $options['response_mime_type'] ?? null,
+                    "response_schema"       => $options['response_schema'] ?? null,
+                ]
             ];
-        } catch (Exception $e) {
+            if(!empty($options['function_calling'])) {
+                $data['tools'] = $options['function_calling']['function'];
+                $data['tool_config'] = $options['tool_config'] ?? null;
+            }
+            return $this->sendRequest($endpoint, $data);
+
+        } catch (\Exception $e) {
             return [
                 'error' => $e->getMessage(),
             ];
         }
     }
 
-
-    public function transcribeAudio(string $audioPath, array $options = []): array
+    public function listUploadedfiles()
     {
-        $mimeType = mime_content_type($audioPath);
-        $fileSize = filesize($audioPath);
-        $displayName = 'AUDIO';
+        $endpoint = sprintf('files?key=%s', $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'get');
+    }
 
-        try {
-            // Step 1: Start resumable upload
-            $initialResponse = $this->client->post(
-                sprintf('%s/upload/v1beta/files?key=%s', $this->baseUrl, $this->apiKey),
-                [
-                    'headers' => [
-                        'X-Goog-Upload-Protocol' => 'resumable',
-                        'X-Goog-Upload-Command' => 'start',
-                        'X-Goog-Upload-Header-Content-Length' => $fileSize,
-                        'X-Goog-Upload-Header-Content-Type' => $mimeType,
-                    ],
-                    'json' => [
-                        'file' => [
-                            'display_name' => $displayName,
-                        ],
-                    ],
+    public function deleteUploadedfile(string $fileName)
+    {
+        $endpoint = sprintf('files/%s?key=%s', $fileName, $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'delete');
+    }
+
+    public function listCaches()
+    {
+        $endpoint = sprintf('cachedContents?key=%s', $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'get');
+    }
+
+    public function updateCache(string $cache, string $ttl)
+    {
+        $data = [
+            'ttl' => $ttl
+        ];
+        $endpoint = sprintf('%s?key=%s',$cache, $this->apiKey);
+        return $this->sendRequest($endpoint, $data, 'update');
+    }
+
+    public function deleteCache(string $cache)
+    {
+        $endpoint = sprintf('%s?key=%s', $cache, $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'delete');
+    }
+
+    public function googleSearch(string $prompt)
+    {
+        $options['function_calling'] = [
+            ["google_search_retrieval" => [
+                "dynamic_retrieval_config" => [
+                    "mode" => "MODE_DYNAMIC",
+                    "dynamic_threshold" => 1,
                 ]
-            );
+            ]]
+        ];
+        return $this->generateText($prompt, $options);
+    }
 
-            $uploadUrl = $initialResponse->getHeader('X-Goog-Upload-URL')[0];
+    public function tuneGoogleModel(array $trainingData, array $hyperparameters, string $base_model, string $displayName)
+    {
+        $data = [
+            "display_name" => $displayName,
+            "base_model" => $base_model,
+            "tuning_task" => [
+                "hyperparameters" => $hyperparameters,
+                "training_data" => $trainingData,
+            ]
+        ];
 
-            // Step 2: Upload audio file
-            $this->client->post(
-                $uploadUrl,
+        $endpoint = sprintf('tunedModels?key=%s', $this->apiKey);
+        return $this->sendRequest($endpoint, $data);
+    }
+
+    public function checkTunedModelStatus(string $model)
+    {
+        $endpoint = sprintf('%s?key=%s', $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'get');
+    }
+
+    public function deleteFineTunedModel(string $model)
+    {
+        $endpoint = sprintf('%s?key=%s', $this->apiKey);
+        return $this->sendRequest($endpoint, [], 'delete');
+    }
+
+    public function generateEmbeddings(string $prompt)
+    {
+        $modelToUse = $this->defaultModel;
+        $endpoint = !$stream ? sprintf('models/%s:embedContent?key=%s', $modelToUse, $this->apiKey) : sprintf('models/%s:streamContent?alt=sse&key=%s', $modelToUse, $this->apiKey);
+        $data = [
+            "model" => $modelToUse,
+            "contents" => [
                 [
-                    'headers' => [
-                        'Content-Length' => $fileSize,
-                        'X-Goog-Upload-Offset' => 0,
-                        'X-Goog-Upload-Command' => 'upload, finalize',
-                    ],
-                    'body' => fopen($audioPath, 'rb'),
+                    "parts" => [
+                        ["text" => $prompt]
+                    ]
                 ]
-            );
-
-            // Step 3: Transcribe using uploaded file
-            $fileUri = $uploadUrl; // Assuming the file URI is derived from the upload URL
-            $endpoint = sprintf('%s/models/%s:generateContent?key=%s', $this->baseUrl, $modelToUse, $this->apiKey);
-
-            $response = $this->client->post(
-                $endpoint,
+            ],
+            "cachedContent" => $options['cachedContent'] ?? null,
+            "safetySettings" => [
                 [
-                    'json' => [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => 'Describe this audio clip'],
-                                    [
-                                        'file_data' => [
-                                            'mime_type' => $mimeType,
-                                            'file_uri' => $fileUri,
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
+                    "category" => $options['safety_category'] ?? null,
+                    "threshold" => $options['safety_threshold'] ?? null,
                 ]
-            );
-
-            return [
-                'data' => json_decode($response->getBody()->getContents(), true),
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage(),
-            ];
+            ],
+            "systemInstruction" => $options['systemInstruction'] ?? null,
+            "generationConfig" => [
+                "stopSequences"         => $options['stopSequences'] ?? null,
+                "temperature"           => $options['temperature'] ?? null,
+                "maxOutputTokens"       => $options['maxOutputTokens'] ?? null,
+                "topP"                  => $options['topP'] ?? null,
+                "topK"                  => $options['topK'] ?? null,
+                "response_mime_type"    => $options['response_mime_type'] ?? null,
+                "response_schema"       => $options['response_schema'] ?? null,
+            ]
+        ];
+        if(!empty($options['function_calling'])) {
+            $data['tools'] = $options['function_calling']['function'];
+            $data['tool_config'] = $options['tool_config'] ?? null;
         }
     }
 }

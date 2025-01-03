@@ -40,6 +40,8 @@ class ClaudeAIService{
         return $this;
     }
 
+    
+
 
     public function __construct()
     {
@@ -53,7 +55,31 @@ class ClaudeAIService{
         }
     }
 
-    public function generateText(array $messages, array $options = []): array
+    public function generateText(string $prompt, array $options = []): array
+    {
+        $maxTokens = $options['maxTokens'] ?? config('ai.providers.claude.default_max_tokens');
+        $data = [
+            'model'             => $this->model,
+            'max_tokens'        => $maxTokens,
+            'messages'          => [
+                "role" => "user",
+                "content" => $prompt
+            ],
+            'tools'             => $this->tool ?? null,
+            'stream'            => $this->stream,
+            'metadata'          => $options['metadata'] ?? null,
+            'stop_sequences'    => $options['metadata'] ?? null,
+            'temperature'       => $options['temperature'] ?? null,
+            'system'            => $options['system'] ?? null,
+            'tool_choice'       => $options['tool_choice'] ?? null,
+            'top_k'             => $options['top_k'] ?? null,
+            'top_p'             => $options['top_p'] ?? null,
+        ];
+
+        return $this->sendRequest('messages', $data);
+    }
+
+    public function chat(array $messages, array $options = []): array
     {
         $maxTokens = $options['maxTokens'] ?? config('ai.providers.claude.default_max_tokens');
         $data = [
