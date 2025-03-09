@@ -24,7 +24,7 @@ return [
         'gemini' => [
             'api_key' => env('GEMINI_API_KEY'),
             'base_url' => 'https://generativelanguage.googleapis.com/v1beta/',
-            'default_model' => 'gemini-1.5-flash:generateContent',
+            'default_model' => 'gemini-2.0-flash:generateContent',
         ]
     ]
     
